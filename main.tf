@@ -1,6 +1,19 @@
 provider "openstack" {
 }
 
+variable "config_git_url" {
+  type        = string
+  description = "URL to the Magic Castle Puppet configuration git repo"
+  default     = "https://github.com/ComputeCanada/puppet-magic_castle/"
+}
+
+variable "config_version" {
+  type        = string
+  description = "Tag, branch, or commit that specifies which Puppet configuration revision is to be used"
+  default     = "10.2"
+}
+
+
 variable "cluster_name" {
   default = "hashy"
 }
@@ -70,10 +83,65 @@ variable "firewall_rules" {
   description = "List of login external firewall rules defined as map of 5 values name, from_port, to_port, ip_protocol and cidr"
 }
 
+resource "random_string" "munge_key" {
+  length  = 32
+  special = false
+}
+
 resource "random_string" "puppetmaster_password" {
   length  = 32
   special = false
 }
+
+resource "random_string" "freeipa_passwd" {
+  length  = 16
+  special = false
+}
+
+resource "random_pet" "guest_passwd" {
+  length    = 4
+  separator = "."
+}
+
+resource "random_uuid" "consul_token" { }
+
+data "http" "hieradata_template" {
+  url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/data/terraform_data.yaml.tmpl"
+}
+
+data "template_file" "hieradata" {
+  template = data.http.hieradata_template.body
+
+  vars = {
+    sudoer_username = "centos"
+    freeipa_passwd  = random_string.freeipa_passwd.result
+    cluster_name    = lower(var.cluster_name)
+    domain_name     = "calculquebec.cloud"
+    guest_passwd    = random_pet.guest_passwd.id
+    consul_token    = random_uuid.consul_token.result
+    munge_key       = base64sha512(random_string.munge_key.result)
+    nb_users        = 10
+    mgmt1_ip        = openstack_networking_port_v2.ports["mgmt1"].all_fixed_ips[0]
+    home_dev        = jsonencode([])
+    project_dev     = jsonencode([])
+    scratch_dev     = jsonencode([])
+  }
+}
+
+data "http" "facts_template" {
+  url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/site/profile/facts.d/terraform_facts.yaml.tmpl"
+}
+
+data "template_file" "facts" {
+  template = data.http.facts_template.body
+
+  vars = {
+    software_stack = "eessi"
+    cloud_provider = "openstack"
+    cloud_region   = "arbutus"
+  }
+}
+
 
 variable "os_ext_network" {
   type    = string
@@ -286,6 +354,50 @@ resource "openstack_compute_floatingip_associate_v2" "fip" {
 #     )
 #   }
 # }
+
+resource "null_resource" "deploy_hieradata" {
+  connection {
+    type                 = "ssh"
+    bastion_host         = local.public_ip[keys(local.public_ip)[0]]
+    bastion_user         = "centos"
+    user                 = "centos"
+    host                 = "puppet"
+  }
+
+  triggers = {
+    hieradata    = md5(data.template_file.hieradata.rendered)
+    facts        = md5(data.template_file.facts.rendered)
+  }
+
+  provisioner "file" {
+    content     = data.template_file.hieradata.rendered
+    destination = "terraform_data.yaml"
+  }
+
+  provisioner "file" {
+    content     = data.template_file.facts.rendered
+    destination = "terraform_facts.yaml"
+  }
+
+  provisioner "file" {
+    content     = "---"
+    destination = "user_data.yaml"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mkdir -p /etc/puppetlabs/data",
+      "sudo mkdir -p /etc/puppetlabs/facts",
+      "sudo install -m 650 terraform_data.yaml user_data.yaml /etc/puppetlabs/data/",
+      "sudo install -m 650 terraform_facts.yaml /etc/puppetlabs/facts/",
+      # These chgrp commands do nothing if the puppet group does not yet exist
+      # so these are also handled by puppetmaster.yaml
+      "sudo chgrp puppet /etc/puppetlabs/data/terraform_data.yaml /etc/puppetlabs/data/user_data.yaml &> /dev/null || true",
+      "sudo chgrp puppet /etc/puppetlabs/facts/terraform_facts.yaml &> /dev/null || true",
+      "rm -f terraform_data.yaml user_data.yaml terraform_facts.yaml",
+    ]
+  }
+}
 
 
 output "public_instances" {
