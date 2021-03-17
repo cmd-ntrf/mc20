@@ -165,7 +165,8 @@ variable "public_keys" {
 variable "instances" {
   description = "Map that defines the parameters for each type of instance of the cluster"
   default = {
-    mgmt     = { type = "p4-6gb", tags = ["puppet", "mgmt", "storage"] },
+    puppet   = { type = "p4-6gb", tags = ["puppet"] },
+    mgmt     = { type = "p4-6gb", tags = ["mgmt", "storage"] },
     login    = { type = "p2-3gb", tags = ["login", "proxy", "public"] },
     node     = { type = "p2-3gb", tags = ["node"], count = 2 },
     # gpu      = { type = "g1-18gb-c4-22gb", tags = ["node"], count = 2  },
