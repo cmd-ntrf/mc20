@@ -16,6 +16,15 @@ Example:
     node     = { type = "p2-3gb", tags = ["node"], count = 2 },
     gpu      = { type = "g1-18gb-c4-22gb", tags = ["node"], count = 2  },
   }
+
+  storage = {
+    nfs = {
+      home     = 50
+      project  = 100
+      scratch  = 100
+      misc     = 10
+    }
+  }
 ```
 
 ## what is missing?
