@@ -136,7 +136,7 @@ data "template_file" "facts" {
   template = data.http.facts_template.body
 
   vars = {
-    software_stack = "eessi"
+    software_stack = "computecanada"
     cloud_provider = "openstack"
     cloud_region   = "arbutus"
   }
