@@ -26,6 +26,17 @@ variable "os_floating_ips" {
   default = { }
 }
 
+variable "storage" {
+  default = {
+    nfs = {
+      home = 50
+      project = 100
+      scratch = 100
+      software = 10
+    }
+  }
+}
+
 variable "firewall_rules" {
   type    = list(
     object({
@@ -122,9 +133,9 @@ data "template_file" "hieradata" {
     munge_key       = base64sha512(random_string.munge_key.result)
     nb_users        = 10
     mgmt1_ip        = openstack_networking_port_v2.ports["mgmt1"].all_fixed_ips[0]
-    home_dev        = jsonencode([])
-    project_dev     = jsonencode([])
-    scratch_dev     = jsonencode([])
+    home_dev        = jsonencode(local.volume_devices["nfs"]["home"])
+    project_dev     = jsonencode(local.volume_devices["nfs"]["project"])
+    scratch_dev     = jsonencode(local.volume_devices["nfs"]["scratch"])
   }
 }
 
@@ -166,7 +177,7 @@ variable "instances" {
   description = "Map that defines the parameters for each type of instance of the cluster"
   default = {
     puppet   = { type = "p4-6gb", tags = ["puppet"] },
-    mgmt     = { type = "p4-6gb", tags = ["mgmt", "storage"] },
+    mgmt     = { type = "p4-6gb", tags = ["mgmt", "nfs"] },
     login    = { type = "p2-3gb", tags = ["login", "proxy", "public"] },
     node     = { type = "p2-3gb", tags = ["node"], count = 2 },
     # gpu      = { type = "g1-18gb-c4-22gb", tags = ["node"], count = 2  },
@@ -321,6 +332,41 @@ resource "openstack_compute_instance_v2" "instances" {
       image_id,
       block_device[0].uuid
     ]
+  }
+}
+
+locals {
+  volumes = merge([
+    for ki, vi in var.storage : {
+      for kj, vj in vi:
+        "${ki}-${kj}" => {
+          size = vj
+          instance = try(element([for x, values in local.instances: x if contains(values.tags, ki)], 0), null)
+        }
+    }
+  ]...)
+}
+
+resource "openstack_blockstorage_volume_v2" "volumes" {
+  for_each    = local.volumes
+  name        = "${var.cluster_name}-${each.key}"
+  description = "${var.cluster_name} ${each.key}"
+  size        = each.value.size
+}
+
+resource "openstack_compute_volume_attach_v2" "attachments" {
+  for_each    = { for k, v in local.volumes: k => v if v.instance != null }
+  instance_id = openstack_compute_instance_v2.instances[each.value.instance].id
+  volume_id   = openstack_blockstorage_volume_v2.volumes[each.key].id
+}
+
+locals {
+  volume_devices = {
+    for ki, vi in var.storage:
+      ki => {
+        for kj, vj in vi:
+          kj => ["/dev/disk/by-id/*${substr(openstack_blockstorage_volume_v2.volumes["${ki}-${kj}"].id, 0, 20)}"]
+      }
   }
 }
 
