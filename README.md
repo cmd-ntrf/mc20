@@ -17,3 +17,10 @@ Example:
     gpu      = { type = "g1-18gb-c4-22gb", tags = ["node"], count = 2  },
   }
 ```
+
+## what is missing?
+
+- DNS records
+- NFS Volume mounts
+- Login SSH Hostkeys
+- Replacing hostnames by tags to identify instance role in the cluster
