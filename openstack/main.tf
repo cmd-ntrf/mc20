@@ -7,23 +7,23 @@ data "openstack_images_image_v2" "image" {
 
 data "openstack_compute_flavor_v2" "flavors" {
   for_each = local.instances
-  name = each.value.type
+  name     = each.value.type
 }
 
 locals {
   instances = {
     for item in flatten([
-      for key, value in var.instances: [
-        for j in range(lookup(value, "count", 1)): {
+      for key, value in var.instances : [
+        for j in range(lookup(value, "count", 1)) : {
           (
-            format("%s%d", key, j+1)
-          ) = {
-            for key in setsubtract(keys(value), ["count"]):
-              key => value[key]
+            format("%s%d", key, j + 1)
+            ) = {
+            for key in setsubtract(keys(value), ["count"]) :
+            key => value[key]
           }
         }
       ]
-    ]):
+    ]) :
     keys(item)[0] => values(item)[0]
   }
 }
@@ -82,13 +82,13 @@ resource "openstack_networking_port_v2" "ports" {
 
 resource "openstack_networking_floatingip_v2" "fip" {
   for_each = {
-    for x, values in local.instances: x => true if contains(values.tags, "public") && ! contains(keys(var.os_floating_ips), x)
+    for x, values in local.instances : x => true if contains(values.tags, "public") && !contains(keys(var.os_floating_ips), x)
   }
   pool = data.openstack_networking_network_v2.ext_network.name
 }
 
 locals {
-  puppetmaster_ip = try(element([for x, values in local.instances: openstack_networking_port_v2.ports[x].all_fixed_ips[0] if contains(values.tags, "puppet")], 0), "")
+  puppetmaster_ip = try(element([for x, values in local.instances : openstack_networking_port_v2.ports[x].all_fixed_ips[0] if contains(values.tags, "puppet")], 0), "")
 }
 
 resource "openstack_compute_instance_v2" "instances" {
@@ -112,7 +112,7 @@ resource "openstack_compute_instance_v2" "instances" {
   }
 
   dynamic "block_device" {
-    for_each = var.root_disk_size > data.openstack_compute_flavor_v2.flavors[each.key].disk ? [{volume_size = var.root_disk_size}] : []
+    for_each = var.root_disk_size > data.openstack_compute_flavor_v2.flavors[each.key].disk ? [{ volume_size = var.root_disk_size }] : []
     content {
       uuid                  = data.openstack_images_image_v2.image.id
       source_type           = "image"
@@ -134,11 +134,11 @@ resource "openstack_compute_instance_v2" "instances" {
 locals {
   volumes = merge([
     for ki, vi in var.storage : {
-      for kj, vj in vi:
-        "${ki}-${kj}" => {
-          size = vj
-          instance = try(element([for x, values in local.instances: x if contains(values.tags, ki)], 0), null)
-        }
+      for kj, vj in vi :
+      "${ki}-${kj}" => {
+        size     = vj
+        instance = try(element([for x, values in local.instances : x if contains(values.tags, ki)], 0), null)
+      }
     }
   ]...)
 }
@@ -151,31 +151,31 @@ resource "openstack_blockstorage_volume_v2" "volumes" {
 }
 
 resource "openstack_compute_volume_attach_v2" "attachments" {
-  for_each    = { for k, v in local.volumes: k => v if v.instance != null }
+  for_each    = { for k, v in local.volumes : k => v if v.instance != null }
   instance_id = openstack_compute_instance_v2.instances[each.value.instance].id
   volume_id   = openstack_blockstorage_volume_v2.volumes[each.key].id
 }
 
 locals {
   volume_devices = {
-    for ki, vi in var.storage:
-      ki => {
-        for kj, vj in vi:
-          kj => ["/dev/disk/by-id/*${substr(openstack_blockstorage_volume_v2.volumes["${ki}-${kj}"].id, 0, 20)}"]
-      }
+    for ki, vi in var.storage :
+    ki => {
+      for kj, vj in vi :
+      kj => ["/dev/disk/by-id/*${substr(openstack_blockstorage_volume_v2.volumes["${ki}-${kj}"].id, 0, 20)}"]
+    }
   }
 }
 
 locals {
   public_ip = merge(
     var.os_floating_ips,
-    {for x, values in local.instances: x => openstack_networking_floatingip_v2.fip[x].address
-     if contains(values.tags, "public") && ! contains(keys(var.os_floating_ips), x)}
+    { for x, values in local.instances : x => openstack_networking_floatingip_v2.fip[x].address
+    if contains(values.tags, "public") && !contains(keys(var.os_floating_ips), x) }
   )
 }
 
 resource "openstack_compute_floatingip_associate_v2" "fip" {
-  for_each = {for x, values in local.instances: x => true if contains(values.tags, "public")}
+  for_each    = { for x, values in local.instances : x => true if contains(values.tags, "public") }
   floating_ip = local.public_ip[each.key]
   instance_id = openstack_compute_instance_v2.instances[each.key].id
 }

@@ -18,7 +18,7 @@ resource "random_pet" "guest_passwd" {
   separator = "."
 }
 
-resource "random_uuid" "consul_token" { }
+resource "random_uuid" "consul_token" {}
 
 data "http" "hieradata_template" {
   url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/data/terraform_data.yaml.tmpl"
@@ -63,7 +63,7 @@ data "template_cloudinit_config" "user_data" {
     filename     = "user_data.yaml"
     merge_type   = "list(append)+dict(recurse_array)+str()"
     content_type = "text/cloud-config"
-    content      = templatefile("${path.module}/cloud-init/puppet.yaml",
+    content = templatefile("${path.module}/cloud-init/puppet.yaml",
       {
         tags                  = each.value.tags
         node_name             = format("%s", each.key),
@@ -80,16 +80,16 @@ data "template_cloudinit_config" "user_data" {
 
 resource "null_resource" "deploy_hieradata" {
   connection {
-    type                 = "ssh"
-    bastion_host         = local.public_ip[keys(local.public_ip)[0]]
-    bastion_user         = "centos"
-    user                 = "centos"
-    host                 = "puppet"
+    type         = "ssh"
+    bastion_host = local.public_ip[keys(local.public_ip)[0]]
+    bastion_user = "centos"
+    user         = "centos"
+    host         = "puppet"
   }
 
   triggers = {
-    hieradata    = md5(data.template_file.hieradata.rendered)
-    facts        = md5(data.template_file.facts.rendered)
+    hieradata = md5(data.template_file.hieradata.rendered)
+    facts     = md5(data.template_file.facts.rendered)
   }
 
   provisioner "file" {

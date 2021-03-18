@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 0.13.4"
 }
 
-module openstack {
+module "openstack" {
   source         = "./openstack"
   config_git_url = "https://github.com/ComputeCanada/puppet-magic_castle.git"
   config_version = "nfs-glob"
@@ -12,34 +12,34 @@ module openstack {
   image        = "CentOS-7-x64-2020-03"
 
   instances = {
-    puppet   = { type = "p4-6gb", tags = ["puppet"] },
-    mgmt     = { type = "p4-6gb", tags = ["mgmt", "nfs"] },
-    login    = { type = "p2-3gb", tags = ["login", "proxy", "public"] },
-    node     = { type = "p2-3gb", tags = ["node"], count = 2 },
+    puppet = { type = "p4-6gb", tags = ["puppet"] }
+    mgmt   = { type = "p4-6gb", tags = ["mgmt", "nfs"] }
+    login  = { type = "p2-3gb", tags = ["login", "proxy", "public"] }
+    node   = { type = "p2-3gb", tags = ["node"], count = 2 }
     # gpu      = { type = "g1-18gb-c4-22gb", tags = ["node"], count = 2  },
   }
 
   storage = {
     nfs = {
-      home = 50
-      project = 100
-      scratch = 100
+      home     = 50
+      project  = 100
+      scratch  = 100
       software = 10
     }
   }
 
   public_keys = [file("~/.ssh/id_rsa.pub")]
 
-  nb_users     = 10
+  nb_users = 10
   # Shared password, randomly chosen if blank
   guest_passwd = ""
 
   # OpenStack specific
-  os_floating_ips = { }
+  os_floating_ips = {}
 }
 
-output public_instances {
-    value = module.openstack.public_instances
+output "public_instances" {
+  value = module.openstack.public_instances
 }
 
 ## Uncomment to register your domain name with CloudFlare
