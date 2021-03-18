@@ -202,8 +202,5 @@ locals {
   mgmt1_ip        = try(openstack_networking_port_v2.ports["mgmt1"].all_fixed_ips[0], "")
   puppetmaster_ip = try(openstack_networking_port_v2.ports["mgmt1"].all_fixed_ips[0], "")
   puppetmaster_id = try(openstack_compute_instance_v2.mgmt[0].id, "")
-  login_ids       = openstack_compute_instance_v2.login[*].id
-  home_dev        = [for vol in openstack_blockstorage_volume_v2.home:    "/dev/disk/by-id/*${substr(vol.id, 0, 20)}"]
-  project_dev     = [for vol in openstack_blockstorage_volume_v2.project: "/dev/disk/by-id/*${substr(vol.id, 0, 20)}"]
-  scratch_dev     = [for vol in openstack_blockstorage_volume_v2.scratch: "/dev/disk/by-id/*${substr(vol.id, 0, 20)}"]
+  proxy_ids       = [for key, values in local.instances: openstack_compute_instance_v2.instances[key].id if contains(values["tags"], "proxy")]
 }
