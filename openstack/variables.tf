@@ -1,6 +1,63 @@
+variable "cluster_name" {
+  type        = string
+  description = "Name by which this cluster will be known as."
+  validation {
+    condition     = can(regex("^[a-z][0-9a-z-]*$", var.cluster_name))
+    error_message = "The cluster_name value must be lowercase alphanumeric characters and start with a letter. It can include dashes."
+  }
+}
+
+variable "nb_users" {
+  type        = number
+  description = "Number of user accounts with a common password that will be created"
+}
+
+variable "instances" {
+  description = "Map that defines the parameters for each type of instance of the cluster"
+}
+
+variable "image" {
+  type        = any
+  description = "Name of the operating system image that will be used to create a boot disk for the instances"
+}
+
+variable "root_disk_size" {
+  type        = number
+  default     = 10
+  description = "Size of the instances root disk in GB"
+}
+
+variable "storage" {
+  description = "Map that defines the storage parameters"
+}
+
+variable "domain" {
+  type        = string
+  description = "String which when combined with cluster_name will formed the cluster FQDN"
+}
+
+variable "public_keys" {
+  type        = list(any)
+  description = "List of SSH public keys that can log in as {sudoer_username}"
+}
+
+variable "guest_passwd" {
+  type        = string
+  default     = ""
+  description = "Guest accounts common password. If left blank, the password is randomly generated."
+  validation {
+    condition     = length(var.guest_passwd) == 0 || length(var.guest_passwd) >= 8
+    error_message = "The guest_passwd value must at least 8 characters long or an empty string."
+  }
+}
+
 variable "config_git_url" {
   type        = string
   description = "URL to the Magic Castle Puppet configuration git repo"
+  validation {
+    condition     = can(regex("^https://.*\\.git$", var.config_git_url))
+    error_message = "The config_git_url variable must be an https url to a git repo."
+  }
 }
 
 variable "config_version" {
@@ -8,29 +65,16 @@ variable "config_version" {
   description = "Tag, branch, or commit that specifies which Puppet configuration revision is to be used"
 }
 
-variable "domain" {}
-
-variable "image" {}
-
-variable "sudoer_username" { default = "" }
-
-variable "nb_users" {}
-
-variable "guest_passwd" {}
-
-variable "cluster_name" {}
-
-variable "root_disk_size" {
-  default = 20
+variable "hieradata" {
+  type        = string
+  default     = "---"
+  description = "String formatted as YAML defining hiera key-value pairs to be included in the puppet environment"
 }
 
-variable "instances" {
-  description = "Map that defines the parameters for each type of instance of the cluster"
-  default     = {}
-}
-
-variable "storage" {
-  default = {}
+variable "sudoer_username" {
+  type        = string
+  default     = "centos"
+  description = "Username of the administrative account"
 }
 
 variable "firewall_rules" {
@@ -90,6 +134,14 @@ variable "firewall_rules" {
   description = "List of login external firewall rules defined as map of 5 values name, from_port, to_port, ip_protocol and cidr"
 }
 
-variable "public_keys" {
-  default = []
+variable "generate_ssh_key" {
+  type        = bool
+  default     = false
+  description = "If set to true, Terraform will generate an ssh keypair to connect to the cluster. Default: false"
+}
+
+variable "software_stack" {
+  type        = string
+  default     = "computecanada"
+  description = "Provider of research computing software stack (can be 'computecanada' or 'eessi')"
 }

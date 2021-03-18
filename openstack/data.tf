@@ -14,11 +14,18 @@ resource "random_string" "freeipa_passwd" {
 }
 
 resource "random_pet" "guest_passwd" {
+  count     = var.guest_passwd != "" ? 0 : 1
   length    = 4
   separator = "."
 }
 
 resource "random_uuid" "consul_token" {}
+
+resource "tls_private_key" "ssh" {
+  count     = var.generate_ssh_key ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
 
 data "http" "hieradata_template" {
   url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/data/terraform_data.yaml.tmpl"
@@ -32,7 +39,7 @@ data "template_file" "hieradata" {
     freeipa_passwd  = random_string.freeipa_passwd.result
     cluster_name    = lower(var.cluster_name)
     domain_name     = var.domain
-    guest_passwd    = random_pet.guest_passwd.id
+    guest_passwd    = var.guest_passwd != "" ? var.guest_passwd : try(random_pet.guest_passwd[0].id, "")
     consul_token    = random_uuid.consul_token.result
     munge_key       = base64sha512(random_string.munge_key.result)
     nb_users        = var.nb_users
@@ -78,18 +85,28 @@ data "template_cloudinit_config" "user_data" {
   }
 }
 
+locals {
+  all_tags = flatten([for key, values in local.instances : values["tags"]])
+}
+
 resource "null_resource" "deploy_hieradata" {
+  count = contains(local.all_tags, "puppet") && contains(local.all_tags, "public") ? 1 : 0
+
   connection {
-    type         = "ssh"
-    bastion_host = local.public_ip[keys(local.public_ip)[0]]
-    bastion_user = var.sudoer_username
-    user         = var.sudoer_username
-    host         = "puppet"
+    type                = "ssh"
+    bastion_host        = local.public_ip[keys(local.public_ip)[0]]
+    bastion_user        = var.sudoer_username
+    bastion_private_key = try(tls_private_key.ssh[0].private_key_pem, null)
+    user                = var.sudoer_username
+    host                = "puppet"
+    private_key         = try(tls_private_key.ssh[0].private_key_pem, null)
   }
 
   triggers = {
-    hieradata = md5(data.template_file.hieradata.rendered)
-    facts     = md5(data.template_file.facts.rendered)
+    user_data    = md5(var.hieradata)
+    hieradata    = md5(data.template_file.hieradata.rendered)
+    facts        = md5(data.template_file.facts.rendered)
+    puppetmaster = local.puppetmaster_id
   }
 
   provisioner "file" {
@@ -103,7 +120,7 @@ resource "null_resource" "deploy_hieradata" {
   }
 
   provisioner "file" {
-    content     = "---"
+    content     = var.hieradata
     destination = "user_data.yaml"
   }
 
@@ -121,3 +138,4 @@ resource "null_resource" "deploy_hieradata" {
     ]
   }
 }
+
