@@ -43,17 +43,15 @@ output "public_instances" {
 }
 
 ## Uncomment to register your domain name with CloudFlare
-# module "dns" {
-#   source           = "git::https://github.com/ComputeCanada/magic_castle.git//dns/cloudflare"
-#   email            = "you@example.com"
-#   name             = module.openstack.cluster_name
-#   domain           = module.openstack.domain
-#   public_ip        = module.openstack.ip
-#   login_ids        = module.openstack.login_ids
-#   rsa_public_key   = module.openstack.rsa_public_key
-#   ssh_private_key  = module.openstack.ssh_private_key
-#   sudoer_username  = module.openstack.sudoer_username
-# }
+module "dns" {
+  source           = "./dns/cloudflare"
+  email            = "you@example.com"
+  name             = module.openstack.cluster_name
+  domain           = module.openstack.domain
+  public_instances = module.openstack.public_instances
+  ssh_private_key  = module.openstack.ssh_private_key
+  sudoer_username  = module.openstack.sudoer_username
+}
 
 ## Uncomment to register your domain name with Google Cloud
 # module "dns" {
