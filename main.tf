@@ -10,7 +10,7 @@ variable "config_git_url" {
 variable "config_version" {
   type        = string
   description = "Tag, branch, or commit that specifies which Puppet configuration revision is to be used"
-  default     = "10.2"
+  default     = "nfs-glob"
 }
 
 
@@ -285,7 +285,7 @@ data "template_cloudinit_config" "user_data" {
         tags                  = each.value.tags
         node_name             = format("%s", each.key),
         puppetenv_git         = "https://github.com/ComputeCanada/puppet-magic_castle.git",
-        puppetenv_rev         = "10.2",
+        puppetenv_rev         = "nfs-glob",
         puppetmaster_ip       = local.puppetmaster_ip,
         puppetmaster_password = random_string.puppetmaster_password.result,
         sudoer_username       = "centos",
