@@ -27,6 +27,18 @@ Example:
   }
 ```
 
+## Tags meaning
+
+- `puppet`: Designate the instance that will act as the puppet-server.
+- `public`: Designate instances that needs to have a public ip address.
+- `nfs`: Designate the instance to which will be attached the `nfs` volumes
+defined in `storage`.
+
+Unused tags for now:
+- `mgmt`
+- `login`
+- `node`
+
 ## what is missing?
 
 - DNS records
