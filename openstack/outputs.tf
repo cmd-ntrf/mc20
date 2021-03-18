@@ -1,6 +1,6 @@
 
 output "public_instances" {
-  value = { for x, values in local.instances : x => openstack_compute_floatingip_associate_v2.fip[x].floating_ip if contains(values.tags, "public") }
+  value = local.public_instances
 }
 
 output "cluster_name" {
@@ -34,8 +34,4 @@ output "guest_passwd" {
 output "ssh_private_key" {
   value     = try(tls_private_key.ssh[0].private_key_pem, null)
   sensitive = true
-}
-
-output "proxy_ids" {
-  value = local.proxy_ids
 }

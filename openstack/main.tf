@@ -201,5 +201,15 @@ resource "openstack_compute_floatingip_associate_v2" "fip" {
 locals {
   mgmt1_ip        = try(openstack_networking_port_v2.ports["mgmt1"].all_fixed_ips[0], "")
   puppetmaster_id = try(element([for x, values in local.instances : openstack_compute_instance_v2.instances[x].id if contains(values.tags, "puppet")], 0), "")
-  proxy_ids       = [for key, values in local.instances : openstack_compute_instance_v2.instances[key].id if contains(values["tags"], "proxy")]
+  public_instances = { for x, values in local.instances :
+    x => {
+      public_ip   = openstack_compute_floatingip_associate_v2.fip[x].floating_ip
+      internal_ip = openstack_networking_port_v2.ports[x].all_fixed_ips[0]
+      tags        = values["tags"]
+      id          = openstack_compute_instance_v2.instances[x].id
+      hostkey     = ""
+    }
+    if contains(values.tags, "public")
+  }
+
 }
