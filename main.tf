@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 0.13.4"
 }
 
-module "openstack" {
+module openstack {
   source         = "./openstack"
   config_git_url = "https://github.com/ComputeCanada/puppet-magic_castle.git"
   config_version = "nfs-glob"
@@ -36,6 +36,10 @@ module "openstack" {
 
   # OpenStack specific
   os_floating_ips = { }
+}
+
+output public_instances {
+    value = module.openstack.public_instances
 }
 
 ## Uncomment to register your domain name with CloudFlare
