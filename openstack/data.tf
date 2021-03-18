@@ -35,7 +35,7 @@ data "template_file" "hieradata" {
     guest_passwd    = random_pet.guest_passwd.id
     consul_token    = random_uuid.consul_token.result
     munge_key       = base64sha512(random_string.munge_key.result)
-    nb_users        = 10
+    nb_users        = var.nb_users
     mgmt1_ip        = openstack_networking_port_v2.ports["mgmt1"].all_fixed_ips[0]
     home_dev        = jsonencode(local.volume_devices["nfs"]["home"])
     project_dev     = jsonencode(local.volume_devices["nfs"]["project"])
