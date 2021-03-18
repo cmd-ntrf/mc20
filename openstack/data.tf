@@ -82,8 +82,8 @@ resource "null_resource" "deploy_hieradata" {
   connection {
     type         = "ssh"
     bastion_host = local.public_ip[keys(local.public_ip)[0]]
-    bastion_user = "centos"
-    user         = "centos"
+    bastion_user = var.sudoer_username
+    user         = var.sudoer_username
     host         = "puppet"
   }
 
