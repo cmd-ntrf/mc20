@@ -36,6 +36,15 @@ locals {
             }
         ]
         if contains(values["tags"], "proxy")
+    ]),
+    flatten([
+        for key, values in var.public_instances: {
+            type  = "A"
+            name  = var.name
+            value = values["public_ip"]
+            data  = null
+        }
+        if contains(values["tags"], "login")
     ])
     )
 }

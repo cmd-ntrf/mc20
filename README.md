@@ -33,10 +33,11 @@ Example:
 - `public`: Designate instances that needs to have a public ip address.
 - `nfs`: Designate the instance to which will be attached the `nfs` volumes
 defined in `storage`.
+- `proxy`: When combined with `public`, it designates the instances that will be pointed by the vhost A records.
+- `login`: When combined with `public`, it designates the instances that will be pointed by the `${cluster_name}.${domain}` A records.
 
 Unused tags for now:
 - `mgmt`
-- `login`
 - `node`
 
 ## what is missing?
