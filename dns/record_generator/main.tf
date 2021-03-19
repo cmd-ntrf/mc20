@@ -38,7 +38,7 @@ locals {
         ]
         if contains(values["tags"], "proxy")
     ]),
-    flatten([
+    [
         for key, values in var.public_instances: {
             type  = "A"
             name  = var.name
@@ -46,8 +46,8 @@ locals {
             data  = null
         }
         if contains(values["tags"], "login")
-    ]),
-    flatten([
+    ],
+    [
         for key, values in var.public_instances: {
             type  = "SSHFP"
             name  = join(".", [key, var.name])
@@ -58,8 +58,8 @@ locals {
                 fingerprint = data.external.key2fp[key].result["sha256"]
             }
         }
-    ]),
-    flatten([
+    ],
+    try([element([
         for key, values in var.public_instances: {
             type  = "SSHFP"
             name  = var.name
@@ -69,8 +69,8 @@ locals {
                 type        = 2
                 fingerprint = data.external.key2fp[key].result["sha256"]
             }
-        }
-    ]),
+        } if contains(values["tags"], "login")
+    ], 0)], []),
     )
 }
 

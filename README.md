@@ -42,6 +42,6 @@ Unused tags for now:
 
 ## what is missing?
 
-- DNS records
-- Login SSH Hostkeys
 - Replacing hostnames by tags to identify instance role in the cluster
+- SSL certificates copying to [to be determined] instances
+- 

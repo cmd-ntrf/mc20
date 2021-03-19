@@ -1,18 +1,22 @@
 locals {
   instances = merge(
     flatten([
-      for key, value in var.instances : [
-        for j in range(lookup(value, "count", 1)) : {
-          (
-            format("%s%d", key, j + 1)
-          ) = {
-            for key in setsubtract(keys(value), ["count"]) :
-            key => value[key]
-          }
+      for hostname, attrs in var.instances : [
+        for i in range(lookup(attrs, "count", 1)) : {
+          (format("%s%d", hostname, i + 1)) = { for attr, value in attrs : attr => value if attr != "count" }
         }
       ]
-    ])
-  ...)
+    ])...
+  )
+  host2prefix =  merge(
+    flatten([
+      for hostname, attrs in var.instances : [
+        for i in range(lookup(attrs, "count", 1)) : {
+          (format("%s%d", hostname, i + 1)) = hostname
+        }
+      ]
+    ])...
+  )
 }
 
 resource "random_string" "munge_key" {
@@ -45,7 +49,7 @@ resource "tls_private_key" "ssh" {
 }
 
 resource "tls_private_key" "rsa_hostkeys" {
-  for_each = local.instances
+  for_each  = toset(keys(var.instances))
   algorithm = "RSA"
   rsa_bits  = 4096
 }
@@ -100,10 +104,10 @@ locals {
         puppetmaster_password = random_string.puppetmaster_password.result,
         sudoer_username       = var.sudoer_username,
         ssh_authorized_keys   = var.public_keys,
-        hostkeys              = {
+        hostkeys = {
           rsa = {
-            private = tls_private_key.rsa_hostkeys[key].private_key_pem
-            public  = tls_private_key.rsa_hostkeys[key].public_key_openssh
+            private = tls_private_key.rsa_hostkeys[local.host2prefix[key]].private_key_pem
+            public  = tls_private_key.rsa_hostkeys[local.host2prefix[key]].public_key_openssh
           }
         }
       }

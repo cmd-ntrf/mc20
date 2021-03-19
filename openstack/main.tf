@@ -190,7 +190,7 @@ locals {
       tags        = values["tags"]
       id          = openstack_compute_instance_v2.instances[x].id
       hostkeys    = {
-        rsa = tls_private_key.rsa_hostkeys[x].public_key_openssh
+        rsa = tls_private_key.rsa_hostkeys[local.host2prefix[x]].public_key_openssh
       }
     }
     if contains(values.tags, "public")
