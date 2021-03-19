@@ -8,6 +8,9 @@ variable "vhosts" {
 
 variable "public_instances" {}
 
+variable "domain_tag" {}
+variable "vhost_tag" {}
+
 data "external" "key2fp" {
   for_each = var.public_instances
   program = ["python", "${path.module}/key2fp.py"]
@@ -36,7 +39,7 @@ locals {
                 data  = null
             }
         ]
-        if contains(values["tags"], "proxy")
+        if contains(values["tags"], var.vhost_tag)
     ]),
     [
         for key, values in var.public_instances: {
@@ -45,7 +48,7 @@ locals {
             value = values["public_ip"]
             data  = null
         }
-        if contains(values["tags"], "login")
+        if contains(values["tags"], var.domain_tag)
     ],
     [
         for key, values in var.public_instances: {
