@@ -70,7 +70,9 @@ write_files:
       127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 puppet
 %{ else }
       127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-      ${puppetmaster_ip} puppet
+%{ for ip in puppetmaster_ip ~}
+      ${ip} puppet
+%{ endfor ~}
 %{ endif }
     path: /etc/hosts
     permissions: "0644"

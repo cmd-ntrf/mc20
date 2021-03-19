@@ -88,7 +88,7 @@ resource "openstack_networking_floatingip_v2" "fip" {
 }
 
 locals {
-  puppetmaster_ip = try(element([for x, values in local.instances : openstack_networking_port_v2.ports[x].all_fixed_ips[0] if contains(values.tags, "puppet")], 0), "")
+  puppetmaster_ip = [for x, values in local.instances : openstack_networking_port_v2.ports[x].all_fixed_ips[0] if contains(values.tags, "puppet")]
 }
 
 resource "openstack_compute_instance_v2" "instances" {

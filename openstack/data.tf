@@ -73,13 +73,13 @@ data "template_cloudinit_config" "user_data" {
     content = templatefile("${path.module}/cloud-init/puppet.yaml",
       {
         tags                  = each.value.tags
-        node_name             = format("%s", each.key),
+        node_name             = each.key,
         puppetenv_git         = "https://github.com/ComputeCanada/puppet-magic_castle.git",
         puppetenv_rev         = "nfs-glob",
         puppetmaster_ip       = local.puppetmaster_ip,
         puppetmaster_password = random_string.puppetmaster_password.result,
-        sudoer_username       = "centos",
-        ssh_authorized_keys   = [file("~/.ssh/id_rsa.pub")],
+        sudoer_username       = var.sudoer_username,
+        ssh_authorized_keys   = var.public_keys,
       }
     )
   }
