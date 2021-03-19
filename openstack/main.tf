@@ -207,7 +207,9 @@ locals {
       internal_ip = openstack_networking_port_v2.ports[x].all_fixed_ips[0]
       tags        = values["tags"]
       id          = openstack_compute_instance_v2.instances[x].id
-      hostkey     = ""
+      hostkeys    = {
+        rsa = tls_private_key.rsa_hostkeys[x].public_key_openssh
+      }
     }
     if contains(values.tags, "public")
   }
