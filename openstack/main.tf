@@ -10,24 +10,6 @@ data "openstack_compute_flavor_v2" "flavors" {
   name     = each.value.type
 }
 
-locals {
-  instances = {
-    for item in flatten([
-      for key, value in var.instances : [
-        for j in range(lookup(value, "count", 1)) : {
-          (
-            format("%s%d", key, j + 1)
-            ) = {
-            for key in setsubtract(keys(value), ["count"]) :
-            key => value[key]
-          }
-        }
-      ]
-    ]) :
-    keys(item)[0] => values(item)[0]
-  }
-}
-
 resource "openstack_compute_keypair_v2" "keypair" {
   name       = "${var.cluster_name}-key"
   public_key = file("~/.ssh/id_rsa.pub")
@@ -213,5 +195,4 @@ locals {
     }
     if contains(values.tags, "public")
   }
-
 }
