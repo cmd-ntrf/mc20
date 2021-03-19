@@ -7,15 +7,15 @@ module "openstack" {
   config_git_url = "https://github.com/ComputeCanada/puppet-magic_castle.git"
   config_version = "nfs-glob"
 
-  cluster_name = "hashi"
+  cluster_name = "zaa"
   domain       = "calculquebec.cloud"
   image        = "CentOS-7-x64-2020-03"
 
   instances = {
     puppet = { type = "p4-6gb", tags = ["puppet"] }
-    mgmt   = { type = "p4-6gb", tags = ["mgmt", "nfs"] }
-    login  = { type = "p2-3gb", tags = ["login", "proxy", "public"] }
-    node   = { type = "p2-3gb", tags = ["node"], count = 2 }
+    mgmt   = { type = "p4-6gb", tags = ["mgmt", "nfs"], count = 1 }
+    login  = { type = "p2-3gb", tags = ["login", "public", "proxy"], count = 1 }
+    node   = { type = "p2-3gb", tags = ["node"], count = 1 }
     # gpu      = { type = "g1-18gb-c4-22gb", tags = ["node"], count = 2  },
   }
 
@@ -24,7 +24,6 @@ module "openstack" {
       home     = 50
       project  = 100
       scratch  = 100
-      software = 10
     }
   }
 

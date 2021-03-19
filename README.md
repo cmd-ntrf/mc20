@@ -33,8 +33,10 @@ Example:
 - `public`: Designate instances that needs to have a public ip address.
 - `nfs`: Designate the instance to which will be attached the `nfs` volumes
 defined in `storage`.
-- `proxy`: When combined with `public`, it designates the instances that will be pointed by the vhost A records.
+- `proxy`: When combined with `public`, it designates the instances that will be pointed by the vhost A records. It also designate a host that will receive a copy of the SSL wildcard certificate.
 - `login`: When combined with `public`, it designates the instances that will be pointed by the `${cluster_name}.${domain}` A records.
+- `ssl`: When combined with `public`, it designated an instance that will receive a copy of the wildcard certificate.
+
 
 Unused tags for now:
 - `mgmt`
@@ -44,4 +46,4 @@ Unused tags for now:
 
 - Replacing hostnames by tags to identify instance role in the cluster
 - SSL certificates copying to [to be determined] instances
-- 
+- Hostkeys of login nodes 

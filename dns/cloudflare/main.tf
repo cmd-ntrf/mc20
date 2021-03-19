@@ -24,17 +24,16 @@ resource "cloudflare_record" "records" {
   data    = module.record_generator.records[count.index].data
 }
 
-# module "acme" {
-#   source           = "../acme"
-#   dns_provider     = "cloudflare"
-#   name             = lower(var.name)
-#   domain           = var.domain
-#   email            = var.email
-#   sudoer_username  = var.sudoer_username
-#   login_ips        = var.public_ip
-#   login_ids        = var.login_ids
-#   ssh_private_key  = var.ssh_private_key
-# }
+module "acme" {
+  source           = "../acme"
+  dns_provider     = "cloudflare"
+  name             = lower(var.name)
+  domain           = var.domain
+  email            = var.email
+  sudoer_username  = var.sudoer_username
+  public_instances = var.public_instances
+  ssh_private_key  = var.ssh_private_key
+}
 
 output "hostnames" {
   value = distinct(compact([for record in module.record_generator.records : join(".", [record.name, var.domain]) if record.type == "A" ]))
