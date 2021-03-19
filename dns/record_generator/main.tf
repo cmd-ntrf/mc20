@@ -59,7 +59,7 @@ locals {
             }
         }
     ],
-    # try([element([
+    # [
     #     for key, values in var.public_instances: {
     #         type  = "SSHFP"
     #         name  = var.name
@@ -70,7 +70,7 @@ locals {
     #             fingerprint = data.external.key2fp[key].result["sha256"]
     #         }
     #     } if contains(values["tags"], "login")
-    # ], 0)], []),
+    # ],
     )
 }
 
