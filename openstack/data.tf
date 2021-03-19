@@ -1,4 +1,5 @@
 locals {
+  domain_name = "${lower(var.cluster_name)}.${lower(var.domain)}"
   instances = merge(
     flatten([
       for hostname, attrs in var.instances : [
@@ -65,7 +66,7 @@ data "template_file" "hieradata" {
     sudoer_username = var.sudoer_username
     freeipa_passwd  = random_string.freeipa_passwd.result
     cluster_name    = lower(var.cluster_name)
-    domain_name     = var.domain
+    domain_name     = local.domain_name
     guest_passwd    = var.guest_passwd != "" ? var.guest_passwd : try(random_pet.guest_passwd[0].id, "")
     consul_token    = random_uuid.consul_token.result
     munge_key       = base64sha512(random_string.munge_key.result)
