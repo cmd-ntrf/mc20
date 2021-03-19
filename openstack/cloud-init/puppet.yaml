@@ -23,7 +23,7 @@ runcmd:
   - yum -y install https://yum.puppet.com/puppet6-release-el-$(grep -oP 'VERSION_ID="\K[^"]+' /etc/os-release).noarch.rpm
   - chmod 644 /etc/ssh/ssh_host_*_key.pub
   - chgrp ssh_keys /etc/ssh/ssh_host_*_key.pub
-  %{ if contains(tags, "puppet") }
+%{ if contains(tags, "puppet") }
   - yum -y install puppetserver-6.13.0
   - mkdir /var/autosign
   - chown puppet:puppet /var/autosign
