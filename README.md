@@ -45,5 +45,4 @@ Unused tags for now:
 ## what is missing?
 
 - Replacing hostnames by tags to identify instance role in the cluster
-- SSL certificates copying to [to be determined] instances
-- Hostkeys of login nodes 
+- SSHFP record for the "${cluster_name}.${domain}"

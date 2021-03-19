@@ -13,6 +13,8 @@ module "record_generator" {
   source         = "../record_generator"
   name           = lower(var.name)
   public_instances = var.public_instances
+  domain_tag       = var.domain_tag
+  vhost_tag        = var.vhost_tag
 }
 
 resource "cloudflare_record" "records" {
@@ -33,6 +35,7 @@ module "acme" {
   sudoer_username  = var.sudoer_username
   public_instances = var.public_instances
   ssh_private_key  = var.ssh_private_key
+  ssl_tags         = var.ssl_tags
 }
 
 output "hostnames" {

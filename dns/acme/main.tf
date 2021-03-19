@@ -21,6 +21,8 @@ variable "dns_provider_config" {
   default = {}
 }
 
+variable "ssl_tags" { }
+
 variable "public_instances" {}
 
 variable "ssh_private_key" {
@@ -48,7 +50,7 @@ resource "acme_certificate" "certificate" {
 }
 
 resource "null_resource" "deploy_certs" {
-  for_each = { for key, values in var.public_instances: key => values if contains(values["tags"], "ssl") || contains(values["tags"], "proxy") }
+  for_each = { for key, values in var.public_instances: key => values if length(setintersection(var.ssl_tags, values.tags)) > 0 }
 
   triggers = {
     instance_id = each.value["id"]
