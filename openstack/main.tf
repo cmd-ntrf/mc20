@@ -98,7 +98,7 @@ resource "openstack_compute_instance_v2" "instances" {
 
   flavor_name = each.value.type
   key_pair    = openstack_compute_keypair_v2.keypair.name
-  user_data   = data.template_cloudinit_config.user_data[each.key].rendered
+  user_data   = base64gzip(local.user_data[each.key])
 
   network {
     port = openstack_networking_port_v2.ports[each.key].id
@@ -126,7 +126,7 @@ resource "openstack_compute_instance_v2" "instances" {
   lifecycle {
     ignore_changes = [
       image_id,
-      block_device[0].uuid
+      block_device[0].uuid,
     ]
   }
 }

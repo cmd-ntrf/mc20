@@ -21,7 +21,9 @@ runcmd:
   - yum remove -y firewalld
   - yum upgrade -y
   - yum -y install https://yum.puppet.com/puppet6-release-el-$(grep -oP 'VERSION_ID="\K[^"]+' /etc/os-release).noarch.rpm
-%{ if contains(tags, "puppet") }
+  - chmod 644 /etc/ssh/ssh_host_*_key.pub
+  - chgrp ssh_keys /etc/ssh/ssh_host_*_key.pub
+  %{ if contains(tags, "puppet") }
   - yum -y install puppetserver-6.13.0
   - mkdir /var/autosign
   - chown puppet:puppet /var/autosign
@@ -105,6 +107,14 @@ write_files:
     path: /etc/puppetlabs/puppet/csr_attributes.yaml
     permissions: "0640"
 %{ endif }
+
+ssh_keys:
+%{ for key, values in hostkeys ~}
+  ${key}_public: |
+    ${indent(4, values["public"])}
+  ${key}_private: |
+    ${indent(4, values["private"])}
+%{ endfor ~}
 
 disable_ec2_metadata: false
 timezone: "UTC"

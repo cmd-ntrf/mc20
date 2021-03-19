@@ -27,6 +27,12 @@ resource "tls_private_key" "ssh" {
   rsa_bits  = 4096
 }
 
+resource "tls_private_key" "rsa_hostkeys" {
+  for_each = local.instances
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 data "http" "hieradata_template" {
   url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/data/terraform_data.yaml.tmpl"
 }
@@ -64,22 +70,25 @@ data "template_file" "facts" {
   }
 }
 
-data "template_cloudinit_config" "user_data" {
-  for_each = local.instances
-  part {
-    filename     = "user_data.yaml"
-    merge_type   = "list(append)+dict(recurse_array)+str()"
-    content_type = "text/cloud-config"
-    content = templatefile("${path.module}/cloud-init/puppet.yaml",
+locals {
+  user_data = {
+    for key, values in local.instances: key =>
+    templatefile("${path.module}/cloud-init/puppet.yaml",
       {
-        tags                  = each.value.tags
-        node_name             = each.key,
+        tags                  = values["tags"]
+        node_name             = key,
         puppetenv_git         = "https://github.com/ComputeCanada/puppet-magic_castle.git",
         puppetenv_rev         = "nfs-glob",
         puppetmaster_ip       = local.puppetmaster_ip,
         puppetmaster_password = random_string.puppetmaster_password.result,
         sudoer_username       = var.sudoer_username,
         ssh_authorized_keys   = var.public_keys,
+        hostkeys              = {
+          rsa = {
+            private = tls_private_key.rsa_hostkeys[key].private_key_pem
+            public  = tls_private_key.rsa_hostkeys[key].public_key_openssh
+          }
+        }
       }
     )
   }
