@@ -4,8 +4,8 @@ terraform {
 
 module "openstack" {
   source         = "./openstack"
-  config_git_url = "https://github.com/ComputeCanada/puppet-magic_castle.git"
-  config_version = "nfs-glob"
+  config_git_url = "https://github.com/cmd-ntrf/puppet-magic_castle.git"
+  config_version = "master"
 
   cluster_name = "zaa"
   domain       = "calculquebec.cloud"
