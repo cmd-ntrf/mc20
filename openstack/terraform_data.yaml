@@ -1,0 +1,8 @@
+---
+terraform:
+  instances:
+    ${indent(4, instances)}
+  data:
+%{ for key, value in data ~}
+    ${key}: ${value}
+%{ endfor ~}

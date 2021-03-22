@@ -114,7 +114,7 @@ locals {
       }
     )
   }
-  hieradata = templatefile("${path.module}/terraform_state.yaml",
+  hieradata = templatefile("${path.module}/terraform_data.yaml",
     {
       instances = yamlencode(local.all_instances)
       data = {
