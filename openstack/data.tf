@@ -55,43 +55,6 @@ resource "tls_private_key" "rsa_hostkeys" {
   rsa_bits  = 4096
 }
 
-data "http" "hieradata_template" {
-  url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/data/terraform_data.yaml.tmpl"
-}
-
-data "template_file" "hieradata" {
-  template = data.http.hieradata_template.body
-
-  vars = {
-    sudoer_username = var.sudoer_username
-    freeipa_passwd  = random_string.freeipa_passwd.result
-    cluster_name    = lower(var.cluster_name)
-    domain_name     = local.domain_name
-    guest_passwd    = var.guest_passwd != "" ? var.guest_passwd : try(random_pet.guest_passwd[0].id, "")
-    consul_token    = random_uuid.consul_token.result
-    munge_key       = base64sha512(random_string.munge_key.result)
-    nb_users        = var.nb_users
-    mgmt1_ip        = local.mgmt1_ip
-    home_dev        = jsonencode(local.volume_devices["nfs"]["home"])
-    project_dev     = jsonencode(local.volume_devices["nfs"]["project"])
-    scratch_dev     = jsonencode(local.volume_devices["nfs"]["scratch"])
-  }
-}
-
-data "http" "facts_template" {
-  url = "${replace(var.config_git_url, ".git", "")}/raw/${var.config_version}/site/profile/facts.d/terraform_facts.yaml.tmpl"
-}
-
-data "template_file" "facts" {
-  template = data.http.facts_template.body
-
-  vars = {
-    software_stack = "computecanada"
-    cloud_provider = "openstack"
-    cloud_region   = "arbutus"
-  }
-}
-
 locals {
   user_data = {
     for key, values in local.instances: key =>
@@ -131,6 +94,11 @@ locals {
         scratch_dev     = jsonencode(local.volume_devices["nfs"]["scratch"])
       }
     })
+  facts = {
+    software_stack = var.software_stack
+    cloud_provider = local.cloud_provider
+    cloud_region   = local.cloud_region
+  }
 }
 
 locals {
@@ -152,18 +120,18 @@ resource "null_resource" "deploy_hieradata" {
 
   triggers = {
     user_data    = md5(var.hieradata)
-    hieradata    = md5(data.template_file.hieradata.rendered)
-    facts        = md5(data.template_file.facts.rendered)
+    hieradata    = md5(local.hieradata)
+    facts        = md5(yamlencode(local.facts))
     puppetmaster = local.puppetmaster_id
   }
 
   provisioner "file" {
-    content     = data.template_file.hieradata.rendered
+    content     = local.hieradata
     destination = "terraform_data.yaml"
   }
 
   provisioner "file" {
-    content     = data.template_file.facts.rendered
+    content     = yamlencode(local.facts)
     destination = "terraform_facts.yaml"
   }
 
