@@ -62,19 +62,18 @@ locals {
             }
         }
     ],
-    # [
-    #     for key, values in var.public_instances: {
-    #         type  = "SSHFP"
-    #         name  = var.name
-    #         value = null
-    #         data  = {
-    #             algorithm   = data.external.key2fp[key].result["algorithm"]
-    #             type        = 2
-    #             fingerprint = data.external.key2fp[key].result["sha256"]
-    #         }
-    #     } if contains(values["tags"], "login")
-    # ],
-    )
+    [
+         {
+            type  = "SSHFP"
+            name  = var.name
+            value = null
+            data  = {
+                algorithm   = try(coalesce([for key, values in var.public_instances: data.external.key2fp[key].result["algorithm"] if contains(values["tags"], var.domain_tag)]...), 0)
+                type        = 2
+                fingerprint = try(coalesce([for key, values in var.public_instances: data.external.key2fp[key].result["sha256"] if contains(values["tags"], var.domain_tag)]...), 0)
+            }
+        }
+    ])
 }
 
 output "records" {
