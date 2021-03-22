@@ -99,8 +99,8 @@ locals {
       {
         tags                  = values["tags"]
         node_name             = key,
-        puppetenv_git         = "https://github.com/ComputeCanada/puppet-magic_castle.git",
-        puppetenv_rev         = "nfs-glob",
+        puppetenv_git         = var.config_git_url,
+        puppetenv_rev         = var.config_version,
         puppetmaster_ip       = local.puppetmaster_ip,
         puppetmaster_password = random_string.puppetmaster_password.result,
         sudoer_username       = var.sudoer_username,

@@ -50,7 +50,8 @@ runcmd:
   - /opt/puppetlabs/puppet/bin/gem install librarian-puppet
   - "(cd /etc/puppetlabs/code/environments/production/ && HOME=/root PATH=$PATH:/opt/puppetlabs/puppet/bin /opt/puppetlabs/puppet/bin/librarian-puppet install)"
 # Bootstrap services that are essential to puppet agents
-  - /opt/puppetlabs/bin/puppet apply -e 'include profile::consul::server'
+# if the puppet module for consul is present
+  - test -d /etc/puppetlabs/code/environments/production/modules/consul && /opt/puppetlabs/bin/puppet apply -e 'include profile::consul::server'
 %{ endif }
   - yum -y install puppet-agent-6.18.0
   - /opt/puppetlabs/bin/puppet config set certname ${node_name}
