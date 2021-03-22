@@ -45,4 +45,3 @@ Unused tags for now:
 ## what is missing?
 
 - Replacing hostnames by tags to identify instance role in the cluster
-- SSHFP record for the "${cluster_name}.${domain}"
