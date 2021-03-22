@@ -193,5 +193,4 @@ locals {
       }
     }
   }
-  public_instances = { for key, values in local.all_instances: key => values if contains(values["tags"], "public")}
 }

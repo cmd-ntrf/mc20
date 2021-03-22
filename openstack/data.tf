@@ -56,6 +56,12 @@ resource "tls_private_key" "rsa_hostkeys" {
 }
 
 locals {
+  public_instances = { for key, values in local.all_instances: key => values if contains(values["tags"], "public")}
+  all_tags = flatten([for key, values in local.instances : values["tags"]])
+  tag_ip = { for tag in local.all_tags:
+    tag => [for key, values in local.all_instances: values["local_ip"] if contains(values["tags"], tag)]
+  }
+
   user_data = {
     for key, values in local.instances: key =>
     templatefile("${path.module}/cloud-init/puppet.yaml",
@@ -80,6 +86,7 @@ locals {
   hieradata = templatefile("${path.module}/terraform_data.yaml",
     {
       instances = yamlencode(local.all_instances)
+      tag_ip    = yamlencode(local.tag_ip)
       data = {
         sudoer_username = var.sudoer_username
         freeipa_passwd  = random_string.freeipa_passwd.result
@@ -99,10 +106,6 @@ locals {
     cloud_provider = local.cloud_provider
     cloud_region   = local.cloud_region
   }
-}
-
-locals {
-  all_tags = flatten([for key, values in local.instances : values["tags"]])
 }
 
 resource "null_resource" "deploy_hieradata" {
